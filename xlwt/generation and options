@@ -1,0 +1,352 @@
+A diario nos encontramos con la necesidad de que nuestros proyectos soporten la generación de informes ordenados, con buena 
+presentación y fácilmente legibles por los usuarios. Ya sea un informe de gastos, un informe de facturación,  una tabla que 
+nos permita visualizar los datos de nuestros contactos o un informe de movimientos y solicitudes mensuales en nuestro 
+sitio web, una hoja de cálculo es la mejor opción a la hora de tener un informe entendible y flexible para el usuario.
+
+xlwt es una librería de python creada por John Machin, que permite generar hojas de cálculo flexibles. compatibles con 
+Office, OpenOffice, Calc, Gnumeric y con total soporte para Unicode, y a la vez permite personalizar los archivos generados. En este 
+articulo enumeraremos algunas de las herramientas que nos brinda xlwt e iremos paso a paso, detallando el código para obtener 
+un informe final con  nuestras preferencias de personalización.
+
+1. GENERANDO LIBRO
+
+La clase WorkBook() nos permite asignar a una variable las características de un archivo xls. Todo libro o archivo xls debe 
+contar con al menos una hoja de cálculo. Las hojas de cálculo se crean por medio del método add_sheet('nombre_de_la_hoja'). 
+A continuación, se describe el código básico para generar un libro de trabajo llamado first_book.xls, con dos hojas de calculo 
+vacías (first_sheet y second_sheet).
+
+from xlwt import Workbook
+
+def first_book():
+    # Workbook asing
+    first_book=Workbook()
+
+    # Sheets definition
+    first_book.add_sheet('first_sheet')
+    first_book.add_sheet('second_sheet')
+
+    # Saving file
+    first_book.save('first_book.xls')
+Para manipular las distintas hojas de cálculo y así definir los contenidos deseados para cada una de ellas, asignamos variables a 
+estas, de la siguiente forma:
+
+from xlwt import Workbook
+
+def first_book():
+    # Workbook asing
+    first_book=Workbook()
+
+    # Sheets definition
+    ws1 = first_book.add_sheet('first_sheet')
+    ws2 = first_book.add_sheet('second_sheet')
+
+    # Saving file
+    first_book.save('first_book.xls')
+2. IMPRIMIENDO DATOS
+
+Las hojas de cálculo cuentan con el métodowrite, que nos permite introducir contenido en las celdas. Los parámetros que recibe 
+son la posición (celda) y contenido. La posición se introduce de la forma (fila, columna), empezando por la posición (0, 0), equivalente
+en nuestra hoja a la celda A1.
+
+En la siguiente modificación a nuestra función, se introduce, en la hoja de trabajo first_sheet, en la posición A1, el 
+texto "Content 1, sheet 1", y en la posición B1, el texto "Content 2, sheet 1". De la misma forma, en la hoja de cálculo 
+second_sheet, se introduce, en la posición A2, el texto "Content 1, sheet 2", y en la posición B2, el texto "Content 2, sheet 2".
+
+from xlwt import Workbook
+
+def first_book():
+    # Workbook asing
+    first_book=Workbook()
+
+    # Sheets definition
+    ws1 = first_book.add_sheet('first_sheet')
+    ws2 = first_book.add_sheet('second_sheet')
+
+    # content per sheets
+    ws1.write(0, 0, 'Content 1, sheet 1')
+    ws1.write(0, 1, 'Content 2, sheet 1')
+    ws2.write(1, 0, 'Content 1, sheet 2')
+    ws2.write(1, 1, 'Content 2, sheet 2')
+
+    # Saving file
+    first_book.save('first_book.xls')
+Pero introducir uno a uno el contenido de cada una de las celdas resultaría ser el proceso mas ineficiente posible a la hora de generar un informe xls. Por tal razón, utilizaremos los bucles de python para imprimir estos contenidos de forma automática.
+
+Ahora generaremos una sola hoja de cálculo, en la cual imprimiremos una tabla que relaciona nombre y edad de una sería de personas que se han definido previamente en un diccionario llamado ages.
+
+from xlwt import Workbook
+
+ages={
+        'Peter': 20,
+        'Karen': 19,
+        'Jessie': 43,
+        'Leonard': 56,
+        'Robert': 30,
+        'Nina': 23,
+    }
+
+number_of_elements = len(ages)
+
+def first_book():
+    first_book=Workbook()
+
+    # Sheet definition
+    ws1 = first_book.add_sheet('first_sheet')
+
+    # Header definition
+    ws1.write(0, 0, 'Name')
+    ws1.write(0, 1, 'Years old')
+
+    # Represents the first row in the iteration
+    i = 1 
+
+    for name, years in ages.items():
+        ws1.write(i, 0, name)
+        ws1.write(i, 1, years)
+        i += 1
+        if i == number_of_elements+1: # For display the latest element
+            break
+
+    # Saving file
+    first_book.save('first_book.xls')
+Primero definimos el header de la tabla. Asignamos como contenido a la celda A1 (posición 0, 0) el texto "Name", y a la celda B1 (posición 0, 1) el texto "Years old". A continuación definimos la variable i, que representa el número de la fila desde la cual vamos a empezar a imprimir la información de las personas de nuestro diccionario. En este caso, como la fila 1 se encuentra ocupada con el header de la tabla, debemos empezar a introducir los datos desde la fila 2, es decir, desde la posición (1, #-columna).
+
+Con un bucle for en el que iteramos el diccionario ages, introducimos de forma ordenada los datos de las personas en nuestra tabla. Por cada ciclo aumentamos el valor de i en 1, y de esta forma imprimimos los datos de cada persona del diccionario en una fila distinta.
+
+Previamente habíamos definido la variable number_of_elements, asignándole como valor el número equivalente a la cantidad de elementos del diccionario ages. Esta variable es de gran importancia en este ejemplo, ya que es la clave para salir del bucle y evitar errores de sobre-escritura en las celdas de nuestro archivo first_book.xls.
+
+Rompemos el bucle cuando la variable i sea igual a number_of_elements + 1. ¿Porque?... La cantidad de elementos en nuestro diccionario es 6 y el valor inicial de la variable i es 1. Por lo tanto, si rompemos el bucle cuando la variable i sea igual a 6, solo estaríamos repitiendo el ciclo 5 veces, es decir, perderíamos el último elemento de nuestro diccionario.
+
+3. PERSONALIZANDO LA PRESENTACIÓN
+
+Haciendo uso de las clases Font, XFStyle y Borders, podemos añadir preferencias de visualización para nuestras celdas y sus contenidos. A continuación se muestra como personalizar nuestra hoja de cálculo mediante el uso de solo unas pocas de las muchas opciones que brinda xlwt.
+
+from xlwt import Workbook
+from xlwt import Font
+from xlwt import XFStyle
+from xlwt import Borders
+
+ages={
+        'Peter': 20,
+        'Karen': 19,
+        'Jessie': 43,
+        'Leonard': 56,
+        'Robert': 30,
+        'Nina': 23,
+    }
+
+number_of_elements = len(ages)
+
+def first_book():
+    first_book=Workbook()
+
+    # Sheet definition
+    ws1 = first_book.add_sheet('first_sheet')
+
+    header_font = Font()
+    body_font = Font()
+
+    # Header font preferences
+    header_font.name = 'Times New Roman'
+    header_font.height = 20 * 15
+    header_font.bold = True
+
+    # Body font preferences
+    body_font.name = 'Arial'
+    body_font.italic = True
+
+    # Header Cells style definition
+    header_style = XFStyle()
+    header_style.font = header_font 
+
+    borders = Borders()
+    borders.left = 1
+    borders.right = 1
+    borders.top = 1
+    borders.bottom = 1
+    header_style.borders = borders
+
+    # body cell name style definition
+    body_style = XFStyle()
+    body_style.font = body_font 
+
+    # Header definition
+    ws1.write(0, 0, 'Name', header_style )
+    ws1.write(0, 1, 'Years old', header_style )
+
+    # Represents the first row in the iteration
+    i = 1 
+
+    for name, years in ages.items():
+        ws1.write(i, 0, name, body_style)
+        ws1.write(i, 1, years)
+        i += 1
+        if i == number_of_elements+1: # For display the latest element
+            break
+
+    # Saving file
+    first_book.save('first_book.xls')
+El parámetro height que representa el tamaño de la fuente, se debe incluir multiplicado por un factor de 20. Es decir, si el tamaño de fuente deseado es 15, entonces se debe incluir el valor 300, o si el tamaño deseado es 20, entonces se debe introducir el valor 400.
+
+Una vez definidas nuestras preferencias de personalización, el resultado se envía como el tercer parámetro en el constructor de la celda. Así, en este caso, para las celdas del header enviamos el parámetro header_style, y para las celdas que contienen los nombres de nuestro diccionario enviamos el parámetro body_style.
+
+4. COMBINANDO CELDAS
+
+Otra funcionalidad muy común a la hora de trabajar con hojas de cálculo, es la posibilidad de combinar celdas.
+
+xlwt permite hacer esto de una forma muy simple. A continuación, insertaremos una imagen en el encabezado de la tabla. Para hacer esto, combinaremos una serie de celdas. La forma de hacerlo es sheet_name.write_merge(fila_inicial, fila_final, columna_inicial, columna_final,). Así, se combinarán las celdas comprendidas en el rango indicado. En este caso, combinaremos las celdas comprendidas entre la posición A1 a la B11.  El rango de celdas combinadas y el ancho de las columnas los ajustamos según el tamañ de la imagén a insertar (Este ejemplo esta ajustado para una imagen de 273x180 px ). Este cambio implica mover nuestros datos tantas filas hacia abajo como filas se combinaron para el encabezado. Así, las celdas del header, (Name y years old), se deben ubicar en la fila 12. Nuestra función first_book quedará de la siguiente manera:
+
+def first_book():
+    first_book=Workbook()
+
+    # Sheet definition
+    ws1 = first_book.add_sheet('first_sheet')
+
+    header_font = Font()
+    body_font = Font()
+
+    # Header font preferences
+    header_font.name = 'Times New Roman'
+    header_font.height = 20 * 15
+    header_font.bold = True
+
+    # Body font preferences
+    body_font.name = 'Arial'
+    body_font.italic = True
+
+    # Header Cells style definition
+    header_style = XFStyle()
+    header_style.font = header_font 
+
+    borders = Borders()
+    borders.left = 1
+    borders.right = 1
+    borders.top = 1
+    borders.bottom = 1
+    header_style.borders = borders
+
+    # body cell name style definition
+    body_style = XFStyle()
+    body_style.font = body_font 
+
+    # Header definition
+    ws1.write_merge(0, 10, 0, 1,)
+
+    # # Adjust columns width acording to the image size
+
+    ws1.col(0).width = 8 * 625
+    ws1.col(1).width = 8 * 625
+
+    # Insert image
+    ws1.insert_bitmap('logo.bmp', 0, 0)
+
+    ws1.write(11, 0, 'Name', header_style )
+    ws1.write(11, 1, 'Years old', header_style )
+
+    # Represents the first row in the iteration
+    i = 12
+
+    for name, years in ages.items():
+        ws1.write(i, 0, name, body_style)
+        ws1.write(i, 1, years)
+        i += 1
+        if i == number_of_elements+12: # For display the latest element
+            break
+
+    # Saving file
+    first_book.save('first_book.xls')
+5. INSERTANDO FORMULAS
+
+Ahora, introduciremos el código para implementar una formula que calcule la suma total de las edades de las personas en nuestra tabla. Debemos exportar la clase "Formula" y definir las celdas que se van a operar.
+
+En este caso, se muestra el código para explicar el funcionamiento de las formulas en xlwt, aunque en realidad sería mas sencillo hacer el cálculo en nuestro código y enviar el resultado como parámetro de contenido a una celda determinada. Se deben introducir las celdas a operar por su posición en el formato como se identifican las celdas en los archivos xls (ej:A1, B1).
+
+El código quedaría como sigue:
+
+from xlwt import Workbook
+from xlwt import Font
+from xlwt import XFStyle
+from xlwt import Borders
+from xlwt import Formula
+
+ages={
+        'Peter': 20,
+        'Karen': 19,
+        'Jessie': 43,
+        'Leonard': 56,
+        'Robert': 30,
+        'Nina': 23,
+    }
+
+number_of_elements = len(ages)
+
+def first_book():
+    first_book=Workbook()
+
+    # Sheet definition
+    ws1 = first_book.add_sheet('first_sheet')
+
+    header_font = Font()
+    body_font = Font()
+
+    # Header font preferences
+    header_font.name = 'Times New Roman'
+    header_font.height = 20 * 15
+    header_font.bold = True
+
+    # Body font preferences
+    body_font.name = 'Arial'
+    body_font.italic = True
+
+    # Header Cells style definition
+    header_style = XFStyle()
+    header_style.font = header_font 
+
+    borders = Borders()
+    borders.left = 1
+    borders.right = 1
+    borders.top = 1
+    borders.bottom = 1
+    header_style.borders = borders
+
+    # body cell name style definition
+    body_style = XFStyle()
+    body_style.font = body_font 
+
+    # Header definition
+    ws1.write_merge(0, 10, 0, 1,)
+
+    # # Adjust columns width acording to the image size
+
+    ws1.col(0).width = 8 * 625
+    ws1.col(1).width = 8 * 625
+
+    # Insert image
+    ws1.insert_bitmap('logo.bmp', 0, 0)
+
+    ws1.write(11, 0, 'Name', header_style )
+    ws1.write(11, 1, 'Years old', header_style )
+
+    # Represents the first row in the iteration
+    i = 12
+
+    for name, years in ages.items():
+        ws1.write(i, 0, name, body_style)
+        ws1.write(i, 1, years)
+        i += 1
+        if i == number_of_elements+12: # For display the latest element
+            break
+
+    # Total cell style
+    total_font = Font()
+    total_font.bold = True
+    total_style = XFStyle()
+    total_style.font = total_font 
+
+    ws1.write(i, 0, 'Total', total_style)
+
+    # Formula
+    ws1.write(i, 1, Formula("SUM(B13:B18)"))
+
+    # Saving file
+    first_book.save('first_book.xls')
